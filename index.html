@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Caja Registradora PRO MAX</title>
+
+<style>
+
+body {
+  margin: 0;
+  font-family: "Courier New", monospace;
+  min-height: 100vh;
+  padding: 60px 40px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  box-sizing: border-box;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url("imagen.jpg") center/cover no-repeat;
+  filter: blur(6px) brightness(0.5);
+  z-index: -1;
+}
+
+.contenedor {
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}
+
+.panel, .ticket {
+  background: rgba(255,255,255,0.97);
+  color: #333;
+  width: 100%;
+  max-width: 520px;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+  box-sizing: border-box;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  margin-bottom: 15px;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background: black;
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin-top: 5px;
+}
+
+.linea {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dashed #aaa;
+  padding: 5px 0;
+}
+
+.total {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+/* 🛒 CARRITO VISUAL */
+.carrito {
+  margin-top: 15px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  background: #fafafa;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px dashed #ccc;
+  font-size: 14px;
+}
+
+/* 🔥 OVERLAY PROCESANDO */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 28px;
+  z-index: 9999;
+  font-family: "Courier New", monospace;
+}
+
+.flash {
+  animation: flash 0.2s ease;
+}
+
+@keyframes flash {
+  0% { background: #dfffe0; }
+  100% { background: transparent; }
+}
+
+@media print {
+  .panel { display: none; }
+  body { background: white; }
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- 🔥 OVERLAY -->
+<div class="overlay" id="overlay">💳 Procesando pago...</div>
+
+<div class="contenedor">
+
+<!-- PANEL -->
+<div class="panel">
+  <h3>🛒 TPV SUPERMERCADO</h3>
+
+  <input type="text" id="descripcion" placeholder="Producto">
+  <input type="number" id="unidades" placeholder="Unidades">
+  <input type="number" id="importe" placeholder="Precio unidad">
+
+  <button onclick="agregarProducto()">➕ Añadir producto</button>
+
+  <div class="carrito" id="carrito"></div>
+
+  <select id="pago">
+    <option value="tarjeta">Tarjeta</option>
+    <option value="efectivo">Efectivo</option>
+  </select>
+
+  <input type="number" id="entrega" placeholder="Dinero entregado">
+
+  <button onclick="calcular()">🧾 Generar ticket</button>
+  <button onclick="vaciar()">🗑 Vaciar carrito</button>
+
+  <h4 id="totalLive">Total: 0.00 €</h4>
+</div>
+
+<!-- TICKET -->
+<div class="ticket" id="ticket">
+  <h2>🧾 TICKET</h2>
+  <p>Introduce productos...</p>
+</div>
+
+</div>
+
+<script>
+
+let carrito = [];
+
+function beep() {
+  let ctx = new (window.AudioContext || window.webkitAudioContext)();
+  let osc = ctx.createOscillator();
+  osc.type = "square";
+  osc.frequency.value = 900;
+  osc.connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 0.08);
+}
+
+function actualizarCarrito() {
+
+  let contenedor = document.getElementById("carrito");
+  contenedor.innerHTML = "";
+
+  carrito.forEach(p => {
+
+    let subtotal = p.unidades * p.importe;
+
+    contenedor.innerHTML += `
+      <div class="item">
+        <span>${p.descripcion}</span>
+        <span>${p.unidades} x ${p.importe.toFixed(2)}€ = ${subtotal.toFixed(2)}€</span>
+      </div>
+    `;
+  });
+
+  let total = carrito.reduce((a,p)=>a+p.unidades*p.importe,0);
+  document.getElementById("totalLive").innerText = "Total: " + total.toFixed(2) + " €";
+}
+
+function agregarProducto() {
+
+  let d = document.getElementById("descripcion").value;
+  let u = parseInt(document.getElementById("unidades").value);
+  let i = parseFloat(document.getElementById("importe").value);
+
+  if (!d || isNaN(u) || isNaN(i)) return alert("Completa producto");
+
+  carrito.push({ descripcion: d, unidades: u, importe: i });
+
+  beep();
+  actualizarCarrito();
+
+  document.body.classList.add("flash");
+  setTimeout(() => document.body.classList.remove("flash"), 200);
+
+  document.getElementById("descripcion").value = "";
+  document.getElementById("unidades").value = "";
+  document.getElementById("importe").value = "";
+}
+
+function vaciar() {
+  carrito = [];
+  actualizarCarrito();
+  document.getElementById("ticket").innerHTML = "<h2>🧾 TICKET</h2><p>Carrito vacío</p>";
+}
+
+function calcular() {
+
+  if (carrito.length === 0) return alert("Carrito vacío");
+
+  // 🔥 MOSTRAR PANTALLA PROCESANDO
+  document.getElementById("overlay").style.display = "flex";
+
+  setTimeout(() => {
+
+    document.getElementById("overlay").style.display = "none";
+
+    let pago = document.getElementById("pago").value;
+    let entrega = parseFloat(document.getElementById("entrega").value);
+
+    let subtotal = carrito.reduce((a,p)=>a+p.unidades*p.importe,0);
+
+    let descuento = subtotal * 0.30;
+    let base = subtotal - descuento;
+    let iva = base * 0.21;
+    let total = base + iva;
+
+    let cambio = entrega - total;
+    let error = false;
+
+    if (pago === "efectivo" && (isNaN(entrega) || cambio < 0)) {
+      error = true;
+    }
+
+    let fecha = new Date().toLocaleString();
+    let codigo = "TCK-" + Math.floor(Math.random()*99999999);
+
+    beep();
+
+    let productosHTML = carrito.map(p => `
+      <div class="linea">
+        <span>${p.descripcion}</span>
+        <span>${p.unidades} x ${p.importe.toFixed(2)}€</span>
+      </div>
+    `).join("");
+
+    document.getElementById("ticket").innerHTML = `
+      <h2>🧾 TICKET</h2>
+
+      <div class="linea"><span>Código</span><span>${codigo}</span></div>
+      <div class="linea"><span>Fecha</span><span>${fecha}</span></div>
+
+      ${productosHTML}
+
+      <div class="linea"><span>Subtotal</span><span>${subtotal.toFixed(2)}€</span></div>
+      <div class="linea"><span>Descuento</span><span>-${descuento.toFixed(2)}€</span></div>
+      <div class="linea"><span>IVA</span><span>${iva.toFixed(2)}€</span></div>
+
+      <div class="linea total"><span>TOTAL</span><span>${total.toFixed(2)}€</span></div>
+
+      <div class="linea"><span>Pago</span><span>${pago}</span></div>
+
+      ${
+        pago === "efectivo"
+          ? error
+            ? `<div class="linea"><span>⚠</span><span>Dinero insuficiente</span></div>`
+            : `<div class="linea"><span>Cambio</span><span>${cambio.toFixed(2)}€</span></div>`
+          : ""
+      }
+
+      <button onclick="window.print()">🖨 Imprimir</button>
+    `;
+
+  }, 1500);
+}
+
+</script>
+
+</body>
+</html>
