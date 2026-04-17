@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Caja Registradora PRO MAX</title>
+<title>Caja Registradora</title>
 
 <style>
 
@@ -128,12 +128,10 @@ button {
 
 <body>
 
-<!-- 🔥 OVERLAY -->
 <div class="overlay" id="overlay">💳 Procesando pago...</div>
 
 <div class="contenedor">
 
-<!-- PANEL -->
 <div class="panel">
   <h3>🛒 TPV SUPERMERCADO</h3>
 
@@ -158,7 +156,6 @@ button {
   <h4 id="totalLive">Total: 0.00 €</h4>
 </div>
 
-<!-- TICKET -->
 <div class="ticket" id="ticket">
   <h2>🧾 TICKET</h2>
   <p>Introduce productos...</p>
@@ -232,7 +229,6 @@ function calcular() {
 
   if (carrito.length === 0) return alert("Carrito vacío");
 
-  // 🔥 MOSTRAR PANTALLA PROCESANDO
   document.getElementById("overlay").style.display = "flex";
 
   setTimeout(() => {
@@ -242,12 +238,7 @@ function calcular() {
     let pago = document.getElementById("pago").value;
     let entrega = parseFloat(document.getElementById("entrega").value);
 
-    let subtotal = carrito.reduce((a,p)=>a+p.unidades*p.importe,0);
-
-    let descuento = subtotal * 0.30;
-    let base = subtotal - descuento;
-    let iva = base * 0.21;
-    let total = base + iva;
+    let total = carrito.reduce((a,p)=>a+p.unidades*p.importe,0);
 
     let cambio = entrega - total;
     let error = false;
@@ -275,10 +266,6 @@ function calcular() {
       <div class="linea"><span>Fecha</span><span>${fecha}</span></div>
 
       ${productosHTML}
-
-      <div class="linea"><span>Subtotal</span><span>${subtotal.toFixed(2)}€</span></div>
-      <div class="linea"><span>Descuento</span><span>-${descuento.toFixed(2)}€</span></div>
-      <div class="linea"><span>IVA</span><span>${iva.toFixed(2)}€</span></div>
 
       <div class="linea total"><span>TOTAL</span><span>${total.toFixed(2)}€</span></div>
 
